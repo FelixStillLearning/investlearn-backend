@@ -31,6 +31,7 @@ const UserSchema = new mongoose.Schema({
       default: 'moderate',
     },
     investmentGoals: [String],
+    riskAssessmentScore: { type: Number, default: 0 }, // New field
     verificationStatus: {
       type: String,
       enum: ['pending', 'verified', 'rejected'],
@@ -57,6 +58,12 @@ const UserSchema = new mongoose.Schema({
       longest: { type: Number, default: 0 },
       lastActivity: { type: Date },
     },
+    completedModules: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'LearningModule',
+      },
+    ],
   },
   settings: {
     notifications: {
@@ -77,6 +84,11 @@ const UserSchema = new mongoose.Schema({
         default: 'public',
       },
     },
+    tradingMode: {
+      type: String,
+      enum: ['real', 'simulation'],
+      default: 'simulation',
+    },
   },
   wallet: {
     balance: { type: Number, default: 0 },
@@ -91,6 +103,18 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  followers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
+  following: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
 }, {
   timestamps: true,
 });

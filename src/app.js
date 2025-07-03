@@ -42,5 +42,21 @@ app.get('/', (req, res) => {
 
 // Define Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/portfolios', require('./routes/portfolio'));
+app.use('/api/transactions', require('./routes/transaction'));
+app.use('/api/marketdata', require('./routes/marketdata'));
+app.use('/api/learningmodules', require('./routes/learningModule'));
+app.use('/api/badges', require('./routes/badge'));
+app.use('/api/gamification', require('./routes/gamification'));
+app.use('/api/social', require('./routes/social'));
+app.use('/api/challenges', require('./routes/challenge'));
+app.use('/api/wallet', require('./routes/wallet'));
+app.use('/api/payments', require('./routes/payment'));
+app.use('/api/kyc', require('./routes/kyc'));
+app.use('/api/risk-assessment', require('./routes/riskAssessment'));
+app.use('/api/chat', require('./routes/chat'));
+app.use('/api/notifications', require('./routes/notification'));
+app.use('/api/users', require('./routes/user'));
+app.use('/api/comments', require('./routes/comment'));
 
 module.exports = app;
