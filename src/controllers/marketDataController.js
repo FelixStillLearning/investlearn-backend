@@ -1,8 +1,22 @@
 const MarketData = require('../models/MarketData');
 const marketDataService = require('../utils/marketDataService');
 const io = require('../server').io;
-const Redis = require('ioredis');
-const redisClient = new Redis(process.env.REDIS_URL);
+
+// Redis setup with fallback
+let redisClient = null;
+if (process.env.REDIS_URL && process.env.NODE_ENV === 'production') {
+  try {
+    const Redis = require('ioredis');
+    redisClient = new Redis(process.env.REDIS_URL);
+    redisClient.on('error', (err) => {
+      console.log('Redis error:', err);
+      redisClient = null; // Disable Redis on error
+    });
+  } catch (err) {
+    console.log('Redis connection failed, running without cache');
+    redisClient = null;
+  }
+}
 
 // @desc    Get market data for a symbol
 // @route   GET /api/marketdata/:symbol
@@ -11,10 +25,16 @@ exports.getMarketData = async (req, res) => {
   try {
     const symbol = req.params.symbol.toUpperCase();
 
-    // Try to get data from Redis cache first
-    const cachedData = await redisClient.get(`marketData:${symbol}`);
-    if (cachedData) {
-      return res.json(JSON.parse(cachedData));
+    // Try to get data from Redis cache first (if available)
+    if (redisClient) {
+      try {
+        const cachedData = await redisClient.get(`marketData:${symbol}`);
+        if (cachedData) {
+          return res.json(JSON.parse(cachedData));
+        }
+      } catch (err) {
+        console.log('Redis get error:', err);
+      }
     }
 
     let marketData = await MarketData.findOne({ symbol });
@@ -33,8 +53,16 @@ exports.getMarketData = async (req, res) => {
           });
         }
         await marketData.save();
-        // Store in Redis cache
-        await redisClient.set(`marketData:${symbol}`, JSON.stringify(marketData), 'EX', 3600); // Cache for 1 hour
+        
+        // Store in Redis cache (if available)
+        if (redisClient) {
+          try {
+            await redisClient.set(`marketData:${symbol}`, JSON.stringify(marketData), 'EX', 3600); // Cache for 1 hour
+          } catch (err) {
+            console.log('Redis set error:', err);
+          }
+        }
+        
         io.emit('market_data_update', marketData);
       } else if (!marketData) {
         return res.status(404).json({ msg: 'Market data not found for this symbol' });

@@ -40,6 +40,34 @@ app.get('/', (req, res) => {
   res.send('InvestLearn API is running...');
 });
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    message: 'InvestLearn API is healthy',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// API status endpoint
+app.get('/api/status', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'API is running',
+    endpoints: {
+      auth: '/api/auth',
+      portfolios: '/api/portfolios', 
+      transactions: '/api/transactions',
+      marketdata: '/api/marketdata',
+      learningmodules: '/api/learningmodules',
+      badges: '/api/badges',
+      gamification: '/api/gamification'
+    }
+  });
+});
+
 // Define Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/portfolios', require('./routes/portfolio'));

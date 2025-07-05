@@ -1,10 +1,8 @@
 require('dotenv').config();
 const app = require('./app');
-const connectDB = require('./config/db');
+const connectDB = require('./config/database');
 const http = require('http');
 const { Server } = require('socket.io');
-const Redis = require('ioredis');
-const { createAdapter } = require('@socket.io/redis-adapter');
 
 // Connect to database
 connectDB();
@@ -21,13 +19,34 @@ const io = new Server(server, {
 // Make io accessible in controllers
 app.set('socketio', io);
 
-const pubClient = new Redis(process.env.REDIS_URL);
-const subClient = pubClient.duplicate();
-
-io.adapter(createAdapter(pubClient, subClient));
+// Redis setup (optional for development)
+if (process.env.REDIS_URL && process.env.NODE_ENV === 'production') {
+  const Redis = require('ioredis');
+  const { createAdapter } = require('@socket.io/redis-adapter');
+  
+  try {
+    const pubClient = new Redis(process.env.REDIS_URL);
+    const subClient = pubClient.duplicate();
+    
+    pubClient.on('error', (err) => {
+      console.log('Redis pub client error:', err);
+    });
+    
+    subClient.on('error', (err) => {
+      console.log('Redis sub client error:', err);
+    });
+    
+    io.adapter(createAdapter(pubClient, subClient));
+    console.log('✅ Redis adapter connected');
+  } catch (err) {
+    console.log('⚠️ Redis connection failed, using memory adapter');
+  }
+} else {
+  console.log('⚠️ Running without Redis (development mode)');
+}
 
 io.on('connection', (socket) => {
-  console.log(`User Connected: ${socket.id}`);
+  console.log(`✅ User Connected: ${socket.id}`);
 
   socket.on('join_room', (data) => {
     socket.join(data);
@@ -39,14 +58,15 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('User Disconnected', socket.id);
+    console.log('❌ User Disconnected', socket.id);
   });
 });
 
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`🌐 Access: http://localhost:${PORT}`);
 });
 
 // Export io for use in controllers

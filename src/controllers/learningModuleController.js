@@ -4,7 +4,6 @@ const Badge = require('../models/Badge');
 const auditLogger = require('../utils/auditLogger');
 const { calculateLevel, checkAchievements, updateLearningStreak } = require('../utils/gamificationUtils');
 const { createSocialFeedEntry } = require('./socialController');
-const { calculateLevel } = require('../utils/gamificationUtils');
 
 // @desc    Create new learning module
 // @route   POST /api/learningmodules
